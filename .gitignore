@@ -1,0 +1,8 @@
+target/
+reports/
+screenshots/
+*.log
+.idea/
+.classpath
+.project
+.settings/
