@@ -32,12 +32,19 @@ public class BookingPage extends BasePage {
         return this;
     }
 
+    public BookingPage open(String path) {
+        driver.get(ConfigReader.baseUrl() + path);
+        visible(page);
+        return this;
+    }
+
     public void openMoviesAndBook(String movieId) {
         driver.get(ConfigReader.baseUrl() + "/movies");
         visible(id("movies-page"));
         click(By.id(movieId));
         waitForBookingPage();
     }
+
 
     public boolean isDisplayed() {
         return isVisible(page);

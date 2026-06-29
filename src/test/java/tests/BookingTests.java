@@ -56,10 +56,10 @@ public class BookingTests extends BaseTest {
     }
 
     @Test(groups = { "concurrency", "booking",
-            "TC_CONCURRENT" }, description = "TC_CONCURRENT: Two users select the same seat — verifying both can see the seat")
+            "TC_CONCURRENT" }, description = "TC_CONCURRENT: Two users select the same seat on the same show")
     public void TC_CONCURRENT_onlyOneUserShouldBookSameSeat() throws InterruptedException {
 
-        // ── Create two separate browser sessions ──────────────────────────────────
+        // ── Two separate browser windows ──────────────────────────────────────────
         DriverFactory.createDriver(null, false);
         WebDriver driver1 = DriverFactory.getDriver();
 
@@ -67,58 +67,36 @@ public class BookingTests extends BaseTest {
         WebDriver driver2 = DriverFactory.getDriver();
 
         try {
-            // ── rahulkumar: login → movies page → booking page → show → seat ──────
-            LoginPage lp1 = new LoginPage(driver1).open();
-            lp1.login("rahulkumar", "123456");
-            // lp1.waitUntilLoggedIn();
+            // ── rahulkumar ────────────────────────────────────────────────────────
+            new LoginPage(driver1).open().login("rahulkumar", "123456");
             Thread.sleep(3000);
 
-            BookingPage bp1 = new BookingPage(driver1);
-            bp1.selectMovie("movie-book-3");
+            BookingPage bp1 = new BookingPage(driver1).open("/movies/3/book");
             Thread.sleep(3000);
-            // bp1.selectFirstShowIfPresent();
             bp1.selectShow("show-12");
             Thread.sleep(3000);
             bp1.selectFirstAvailableSeat();
             Thread.sleep(3000);
-            System.out.println("[rahulkumar] Seat selected — staying on booking page.");
+            System.out.println("[rahulkumar] Seat selected — waiting on booking page.");
 
-            // ── sanjaykumar: login → movies page → booking page → show → seat ─────
-            LoginPage lp2 = new LoginPage(driver2).open();
-            lp2.login("sanjaykumar", "123456");
-            // lp2.waitUntilLoggedIn();
+            // ── sanjaykumar ───────────────────────────────────────────────────────
+            new LoginPage(driver2).open().login("sanjaykumar", "123456");
             Thread.sleep(3000);
 
-            BookingPage bp2 = new BookingPage(driver2);
-            bp2.selectMovie("movie-book-3");
-
+            BookingPage bp2 = new BookingPage(driver2).open("/movies/3/book");
             Thread.sleep(3000);
-            // bp2.selectFirstShowIfPresent();
             bp2.selectShow("show-12");
             Thread.sleep(3000);
             bp2.selectFirstAvailableSeat();
             Thread.sleep(3000);
-            System.out.println("[sanjaykumar] Seat selected — staying on booking page.");
+            System.out.println("[sanjaykumar] Seat selected — waiting on booking page.");
 
             // ── Both browsers are now sitting on the seat selection page ──────────
-            // Wait 5 seconds so you can visually see both browsers at the same time
             Thread.sleep(5000);
 
-            // Confirm both are still on the booking page (no accidental navigation)
-            // Assert.assertTrue(bp1.waitForErrorOrStillOnBooking(),
-            // "[rahulkumar] Should still be on the booking/seat selection page.");
-            // Assert.assertTrue(bp2.waitForErrorOrStillOnBooking(),
-            // "[sanjaykumar] Should still be on the booking/seat selection page.");
-
         } finally {
-            try {
-                driver1.quit();
-            } catch (Exception ignored) {
-            }
-            try {
-                driver2.quit();
-            } catch (Exception ignored) {
-            }
+            try { driver1.quit(); } catch (Exception ignored) {}
+            try { driver2.quit(); } catch (Exception ignored) {}
         }
     }
 
