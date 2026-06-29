@@ -86,8 +86,12 @@ public class BookingPage extends BasePage {
         return isVisible(seatCount) && !text(seatCount).isBlank() && isVisible(total);
     }
 
+    public boolean hasConfirmButton() {
+        return isVisible(confirmButton);
+    }
+
     public void proceedToPay() {
-        driver.findElement(confirmButton).click();
+        click(confirmButton);
     }
 
     public boolean waitForErrorOrStillOnBooking() {

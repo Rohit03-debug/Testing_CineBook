@@ -42,6 +42,10 @@ public class MyBookingsPage extends BasePage {
         return isVisible(list) || isVisible(emptyState);
     }
 
+    public boolean hasTabs() {
+        return isVisible(allTab) && isVisible(confirmedTab) && isVisible(cancelledTab);
+    }
+
     public void switchTabs() {
         click(allTab);
         click(confirmedTab);

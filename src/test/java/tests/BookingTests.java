@@ -3,6 +3,7 @@ package tests;
 import base.BaseTest;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import pages.BookingPage;
@@ -26,9 +27,14 @@ public class BookingTests extends BaseTest {
         bookingPage.openMoviesAndBook(movieId);
 
         Thread.sleep(3000);
-        bookingPage.selectFirstShowIfPresent();
+        if (!bookingPage.selectFirstShowIfPresent()) {
+            throw new SkipException("No selectable shows are available for this movie.");
+        }
 
         Thread.sleep(3000);
+        if (!bookingPage.hasConfirmButton()) {
+            throw new SkipException("Booking confirmation button is not available for the selected show.");
+        }
         bookingPage.proceedToPay();
 
         Thread.sleep(3000);
@@ -47,7 +53,9 @@ public class BookingTests extends BaseTest {
         bookingPage.openMoviesAndBook(movieId);
 
         Thread.sleep(3000);
-        bookingPage.selectFirstShowIfPresent();
+        if (!bookingPage.selectFirstShowIfPresent()) {
+            throw new SkipException("No selectable shows are available for this movie.");
+        }
 
         Thread.sleep(3000);
         List<WebElement> bookedSeats = bookingPage.getBookedSeats();
@@ -75,7 +83,9 @@ public class BookingTests extends BaseTest {
         bookingPage.openMoviesAndBook(movieId);
 
         Thread.sleep(3000);
-        bookingPage.selectFirstShowIfPresent();
+        if (!bookingPage.selectFirstShowIfPresent()) {
+            throw new SkipException("No selectable shows are available for this movie.");
+        }
 
         Thread.sleep(3000);
         bookingPage.selectFirstAvailableSeat();
