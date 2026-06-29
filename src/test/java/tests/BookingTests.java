@@ -61,7 +61,6 @@ public class BookingTests extends BaseTest {
             "TC_CONCURRENT" }, description = "TC_CONCURRENT: Two users racing to book the same seat — only one should succeed")
     public void TC_CONCURRENT_onlyOneUserShouldBookSameSeat() throws InterruptedException {
         final String movieId = "movie-book-3";
-        final String showId  = "show-12";
 
         // Latch: both threads count down once they have selected a seat.
         // Neither proceeds to payment until BOTH have selected — then they fire together.
@@ -79,6 +78,10 @@ public class BookingTests extends BaseTest {
         AtomicBoolean user1ReachedPayment = new AtomicBoolean(false);
         AtomicBoolean user2ReachedPayment = new AtomicBoolean(false);
 
+        // Track setup failures separately so we can fail loudly if setup itself breaks
+        AtomicBoolean user1SetupFailed = new AtomicBoolean(false);
+        AtomicBoolean user2SetupFailed = new AtomicBoolean(false);
+
         // ── Thread 1: rahulkumar ──────────────────────────────────────────────────
         Thread t1 = new Thread(() -> {
             try {
@@ -90,18 +93,33 @@ public class BookingTests extends BaseTest {
                 BookingPage bp1 = new BookingPage(driver1);
                 bp1.selectMovie(movieId);
                 Thread.sleep(3000);
-                bp1.selectShow(showId);
+
+                // Dynamically pick the first available show — no hardcoded ID
+                boolean showSelected = bp1.selectFirstShowIfPresent();
                 Thread.sleep(3000);
-                bp1.selectFirstAvailableSeat();
+                if (!showSelected) {
+                    System.out.println("[rahulkumar] No show found on booking page!");
+                    user1SetupFailed.set(true);
+                    seatSelectedLatch.countDown(); // release latch so t2 doesn't hang
+                    return;
+                }
+
+                boolean seatSelected = bp1.selectFirstAvailableSeat();
                 Thread.sleep(3000);
+                if (!seatSelected) {
+                    System.out.println("[rahulkumar] No available seat found!");
+                    user1SetupFailed.set(true);
+                    seatSelectedLatch.countDown();
+                    return;
+                }
 
                 // Seat selected — signal ready and wait for sanjaykumar to be ready too
                 System.out.println("[rahulkumar] Seat selected. Waiting for sanjaykumar...");
                 seatSelectedLatch.countDown();
                 seatSelectedLatch.await(); // blocks until both are ready
 
-                // Both are ready — wait 5 seconds together, then fire payment
-                System.out.println("[rahulkumar] Both ready. Waiting 5 seconds before payment...");
+                // Both are ready — wait 5 seconds so both browsers visibly hold their seat
+                System.out.println("[rahulkumar] Both ready. Holding for 5 seconds before payment...");
                 Thread.sleep(5000);
 
                 System.out.println("[rahulkumar] Proceeding to pay NOW!");
@@ -111,8 +129,9 @@ public class BookingTests extends BaseTest {
                 user1ReachedPayment.set(bp1.navigatedToPaymentOrSuccess());
                 System.out.println("[rahulkumar] payment reached: " + user1ReachedPayment.get());
             } catch (Exception e) {
-                System.out.println("[rahulkumar] Exception: " + e.getMessage());
+                System.out.println("[rahulkumar] Exception during payment flow: " + e.getMessage());
                 user1ReachedPayment.set(false);
+                seatSelectedLatch.countDown(); // ensure t2 is never left hanging
             }
         });
 
@@ -127,18 +146,33 @@ public class BookingTests extends BaseTest {
                 BookingPage bp2 = new BookingPage(driver2);
                 bp2.selectMovie(movieId);
                 Thread.sleep(3000);
-                bp2.selectShow(showId);
+
+                // Dynamically pick the first available show — no hardcoded ID
+                boolean showSelected = bp2.selectFirstShowIfPresent();
                 Thread.sleep(3000);
-                bp2.selectFirstAvailableSeat();
+                if (!showSelected) {
+                    System.out.println("[sanjaykumar] No show found on booking page!");
+                    user2SetupFailed.set(true);
+                    seatSelectedLatch.countDown();
+                    return;
+                }
+
+                boolean seatSelected = bp2.selectFirstAvailableSeat();
                 Thread.sleep(3000);
+                if (!seatSelected) {
+                    System.out.println("[sanjaykumar] No available seat found!");
+                    user2SetupFailed.set(true);
+                    seatSelectedLatch.countDown();
+                    return;
+                }
 
                 // Seat selected — signal ready and wait for rahulkumar to be ready too
                 System.out.println("[sanjaykumar] Seat selected. Waiting for rahulkumar...");
                 seatSelectedLatch.countDown();
                 seatSelectedLatch.await(); // blocks until both are ready
 
-                // Both are ready — wait 5 seconds together, then fire payment
-                System.out.println("[sanjaykumar] Both ready. Waiting 5 seconds before payment...");
+                // Both are ready — wait 5 seconds so both browsers visibly hold their seat
+                System.out.println("[sanjaykumar] Both ready. Holding for 5 seconds before payment...");
                 Thread.sleep(5000);
 
                 System.out.println("[sanjaykumar] Proceeding to pay NOW!");
@@ -148,8 +182,9 @@ public class BookingTests extends BaseTest {
                 user2ReachedPayment.set(bp2.navigatedToPaymentOrSuccess());
                 System.out.println("[sanjaykumar] payment reached: " + user2ReachedPayment.get());
             } catch (Exception e) {
-                System.out.println("[sanjaykumar] Exception: " + e.getMessage());
+                System.out.println("[sanjaykumar] Exception during payment flow: " + e.getMessage());
                 user2ReachedPayment.set(false);
+                seatSelectedLatch.countDown(); // ensure t1 is never left hanging
             }
         });
 
@@ -164,6 +199,12 @@ public class BookingTests extends BaseTest {
         // ── Tear down both drivers ────────────────────────────────────────────────
         try { driver1.quit(); } catch (Exception ignored) {}
         try { driver2.quit(); } catch (Exception ignored) {}
+
+        // ── Fail loudly if setup itself broke (show/seat not found) ───────────────
+        if (user1SetupFailed.get() || user2SetupFailed.get()) {
+            Assert.fail("Setup failed for one or both users — could not find a show or seat. " +
+                    "Check that the movie has an available show with open seats.");
+        }
 
         // ── Assertion: if BOTH reached payment, the system has no seat-lock guard ─
         boolean bothSucceeded = user1ReachedPayment.get() && user2ReachedPayment.get();
