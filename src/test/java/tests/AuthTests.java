@@ -6,6 +6,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.LoginPage;
+import pages.MoviesPage;
 import pages.NavbarPage;
 import pages.RegisterPage;
 import utils.ConfigReader;
@@ -47,7 +48,16 @@ public class AuthTests extends BaseTest {
         Assert.assertTrue(driver.getCurrentUrl().contains("/login"), "Unauthenticated user should be redirected to login.");
     }
 
-    @Test(groups = {"smoke", "auth", "FRD_2_1"}, description = "FRD_2.1.3-2.1.4: Valid moviegoer credentials should create a logged-in session")
+    @Test(groups = {"smoke", "auth", "movie"},
+            description = "SMOKE-01: User can log in and the movies catalog loads — critical user happy path")
+    public void SMOKE_01_userLoginAndMoviesCatalogLoad() {
+        loginAsUser();
+        MoviesPage moviesPage = new MoviesPage(driver).open();
+        Assert.assertTrue(moviesPage.isDisplayed(), "Movies catalog must be visible after user login.");
+        Assert.assertTrue(moviesPage.hasResultsOrEmptyState(), "Movies catalog must serve content or a valid empty state.");
+    }
+
+    @Test(groups = {"sanity", "auth", "FRD_2_1"}, description = "FRD_2.1.3-2.1.4: Valid moviegoer credentials should create a logged-in session")
     public void FRD_206_validMoviegoerLoginCreatesSession() {
         loginAsUser();
         Assert.assertTrue(new NavbarPage(driver).isLogoutVisible(), "Logout button should be visible after login.");

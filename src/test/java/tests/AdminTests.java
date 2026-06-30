@@ -1,16 +1,32 @@
 package tests;
 
 import base.BaseTest;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.AdminBookingsPage;
 import pages.AdminMoviesPage;
 import pages.AdminShowsPage;
 import pages.AnalyticsPage;
+import utils.ConfigReader;
+
+import java.time.Duration;
 
 public class AdminTests extends BaseTest {
 
-    @Test(groups = {"smoke", "admin", "FRD_2_9"},
+    @Test(groups = {"smoke", "auth", "admin"},
+            description = "SMOKE-02: Admin can log in and reach the admin panel — critical admin happy path")
+    public void SMOKE_02_adminLoginAndReachAdminPanel() {
+        loginAsAdmin();
+        new WebDriverWait(driver, Duration.ofSeconds(ConfigReader.getInt("explicitWaitSeconds", 20)))
+                .until(ExpectedConditions.urlContains("/manage-movies"));
+        Assert.assertTrue(
+                driver.getCurrentUrl().contains("/manage-movies"),
+                "Admin must land on /manage-movies after login, not stay on /login.");
+    }
+
+    @Test(groups = {"sanity", "admin", "FRD_2_9"},
             description = "FRD_2.9: Admin can open Manage Movies and see movie form/table")
     public void FRD_291_adminManageMoviesPageLoads() {
         loginAsAdmin();
