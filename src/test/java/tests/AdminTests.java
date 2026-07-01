@@ -1,6 +1,8 @@
 package tests;
 
 import base.BaseTest;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -12,13 +14,26 @@ import utils.ExcelUtils;
 
 import java.util.List;
 import java.util.Map;
+import utils.ConfigReader;
+
+import java.time.Duration;
 
 public class AdminTests extends BaseTest {
 
+    @Test(groups = {"smoke", "auth", "admin"},
+            description = "SMOKE-02: Admin can log in and reach the admin panel — critical admin happy path")
+    public void SMOKE_02_adminLoginAndReachAdminPanel() {
+        loginAsAdmin();
+        new WebDriverWait(driver, Duration.ofSeconds(ConfigReader.getInt("explicitWaitSeconds", 20)))
+                .until(ExpectedConditions.urlContains("/manage-movies"));
+        Assert.assertTrue(
+                driver.getCurrentUrl().contains("/manage-movies"),
+                "Admin must land on /manage-movies after login, not stay on /login.");
+    }
 
-    @Test(groups = {"sanity", "regression", "admin", "FRD_2_9"},
+    @Test(groups = {"sanity", "admin", "FRD_2_9"},
             description = "FRD_2.9: Admin can open Manage Movies and see movie form/table")
-    public void adminManageMoviesPageLoads() {
+    public void FRD_291_adminManageMoviesPageLoads() {
         loginAsAdmin();
         AdminMoviesPage page = new AdminMoviesPage(driver).open();
         Assert.assertTrue(page.isDisplayed(), "Manage Movies page should be displayed.");
@@ -28,16 +43,16 @@ public class AdminTests extends BaseTest {
 
     @Test(groups = {"regression", "admin", "FRD_2_9"},
             description = "FRD_2.9.4: Admin movie form should keep validation active for missing required fields")
-    public void adminMovieFormRequiresMandatoryFields() {
+    public void FRD_294_adminMovieFormRequiresMandatoryFields() {
         loginAsAdmin();
         AdminMoviesPage page = new AdminMoviesPage(driver).open();
         page.submitEmptyForm();
         Assert.assertTrue(page.formStillDisplayed(), "Invalid movie form should remain displayed.");
     }
 
-    @Test(groups = {"sanity", "regression", "admin", "FRD_2_10"},
+    @Test(groups = {"regression", "admin", "FRD_2_10"},
             description = "FRD_2.10: Admin can open Manage Shows and see show form/table")
-    public void adminManageShowsPageLoads() {
+    public void FRD_2101_adminManageShowsPageLoads() {
         loginAsAdmin();
         AdminShowsPage page = new AdminShowsPage(driver).open();
         Assert.assertTrue(page.isDisplayed(), "Manage Shows page should be displayed.");
@@ -45,9 +60,9 @@ public class AdminTests extends BaseTest {
         Assert.assertTrue(page.hasTableOrEmptyState(), "Show table or empty state should be displayed.");
     }
 
-    @Test(groups = {"sanity", "regression", "admin", "FRD_2_11"},
+    @Test(groups = {"regression", "admin", "FRD_2_11"},
             description = "FRD_2.11.1-2.11.3: Admin can view and filter booking records")
-    public void adminBookingsPageLoadsAndTabsWork() {
+    public void FRD_2111_adminBookingsPageLoadsAndTabsWork() {
         loginAsAdmin();
         AdminBookingsPage page = new AdminBookingsPage(driver).open();
         Assert.assertTrue(page.isDisplayed(), "Manage Bookings page should be displayed.");
@@ -55,16 +70,13 @@ public class AdminTests extends BaseTest {
         Assert.assertTrue(page.hasTableOrEmptyRow(), "Admin bookings table or empty row should be displayed.");
     }
 
-    @Test(groups = {"sanity", "regression", "admin", "FRD_2_11"},
+    @Test(groups = {"regression", "admin", "FRD_2_11"},
             description = "FRD_2.11.4-2.11.6: Admin can open analytics dashboard with KPIs")
-    public void adminAnalyticsDashboardLoads() {
+    public void FRD_2114_adminAnalyticsDashboardLoads() {
         loginAsAdmin();
         AnalyticsPage page = new AnalyticsPage(driver).open();
         Assert.assertTrue(page.isDisplayed(), "Analytics dashboard should be displayed.");
         Assert.assertTrue(page.hasKpis(), "Analytics KPI cards should be displayed.");
         page.refresh();
     }
-
-
-
 }

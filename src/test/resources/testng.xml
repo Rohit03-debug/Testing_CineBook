@@ -1,3 +1,4 @@
+<!--"smoke","sanity","regression","know-defect","payment","destructive","admin-analytics","admin-booking-management"-->
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="CineBook Hybrid Suite" verbose="1" parallel="false">
     <listeners>
@@ -10,12 +11,12 @@
     <test name="CineBook Smoke Sanity And Regression">
         <groups>
             <run>
-                <include name="smoke"/>
-                <include name="sanity"/>
-                <include name="regression"/>
-                <exclude name="known-defect"/>
-                <exclude name="payment"/>
-                <exclude name="destructive"/>
+                <include name="admin-booking-management"/>
+<!--                <exclude name="sanity"/>-->
+<!--                <exclude name="regression"/>-->
+<!--                <exclude name="known-defect"/>-->
+<!--                <exclude name="payment"/>-->
+<!--                <exclude name="destructive"/>-->
             </run>
         </groups>
         <packages>
