@@ -6,3 +6,4 @@ screenshots/
 .classpath
 .project
 .settings/
+src/test/resources/config.properties
