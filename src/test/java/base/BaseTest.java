@@ -36,7 +36,7 @@ public abstract class BaseTest {
     @AfterMethod(alwaysRun = true)
     public void tearDown(ITestResult result) {
         // Capture screenshot BEFORE quitting the driver so it is available even for
-        // data-provider tests where @AfterMethod runs before onTestFailure fires.
+        // data-provider tests where @AfterMethod runs before onTestFailure fires
         FAILURE_SCREENSHOT.remove();
         if (result.getStatus() == ITestResult.FAILURE
                 && ConfigReader.getBoolean("screenshotOnFailure", true)) {
